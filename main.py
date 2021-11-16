@@ -1,4 +1,3 @@
-
 import arcade
 
 # Constraints
@@ -10,7 +9,6 @@ SCREEN_TITLE = "Dragon Wash"
 CHARACTER_SCALING = 4
 PLAYER_MOVEMENT_SPEED = 15
 
-#
 RIGHT_FACING = 1
 DOWN_FACING = 0
 LEFT_FACING = 3
@@ -18,6 +16,7 @@ UP_FACING = 2
 
 LAYER_NAME_PLAYER = "Player"
 LAYER_NAME_ARENA = "Arena"
+LAYER_NAME_WALL = "Wall"
 
 
 class PC(arcade.Sprite):
@@ -44,7 +43,7 @@ class PC(arcade.Sprite):
         self.idle_animation_list = []
         for x in range(4):
             self.idle_animation_list.append(
-                arcade.load_texture(f"images/PC_{self.spriteID}.png", x=16*x, y=0, width=16, height=17))
+                arcade.load_texture(f"images/PC_{self.spriteID}.png", x=16 * x, y=0, width=16, height=17))
 
         # ToDo: This is fucked up. When we get new Sprite sheets, fix it.
         # Handles populating the list for walking left.
@@ -99,7 +98,7 @@ class PC(arcade.Sprite):
 
         self.set_hit_box = [[-6, 7], [6, 7], [-6, -6], [6, -6]]
 
-    def update_animation(self, delta_time: float = 1/60):
+    def update_animation(self, delta_time: float = 1 / 60):
 
         # Figure out if we need to flip change sprites.
         if self.change_x > 0 and self.character_face_direction != RIGHT_FACING:
@@ -142,8 +141,8 @@ class Arena(arcade.Sprite):
         for row in range(3):
             for col in range(3):
                 self.arena_ground_base_textures.append(
-                    arcade.load_texture("images/tiles.png", x=64*row, y=64*col, width=64, height=64))
-                
+                    arcade.load_texture("images/tiles.png", x=64 * row, y=64 * col, width=64, height=64))
+
         self.texture = self.arena_ground_base_textures[2]
 
 
@@ -167,7 +166,8 @@ class MyGame(arcade.Window):
         self.water_pressed = False
 
         # These are 'lists' that keep track of sprite. Each sprite goes into a list
-        self.player_list = None
+        self.arena_list = None
+
         self.scene = None
 
         # Separate variable that holds the player sprite
@@ -178,33 +178,34 @@ class MyGame(arcade.Window):
     def setup(self):
         """Set up the game here. Call this function to restart the game."""
         # Create the Sprite lists
-        self.player_list = arcade.SpriteList()
         self.arena_list = arcade.SpriteList()
-
-        self.arena = Arena()
 
         self.scene = arcade.Scene()
         self.player = PC()
-        self.scene.add_sprite("Arena", self.arena)
+        self.wall = arcade.Sprite()
 
         # Set up the player at these coordinates
         self.player.center_x = SCREEN_WIDTH // 4
         self.player.center_y = SCREEN_HEIGHT // 4
-        self.player_list.append(self.player)
-        self.arena_list.append(self.arena)
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player)
+        self.scene.add_sprite(LAYER_NAME_WALL, self.wall)
+        self.physics_engine = arcade.PhysicsEngineSimple(
+            self.player,
+            walls=self.scene[LAYER_NAME_WALL]
+        )
         for ypos in range(16):
             for xpos in range(16):
                 if ypos == 0 and xpos == 0:
+                    self.arena = Arena()
                     self.arena.position = [32, 992]
                     self.arena.texture = self.arena.arena_ground_base_textures[0]
-                    self.scene.add_sprite(LAYER_NAME_ARENA, self.arena)
+                    self.arena_list.append(self.arena)
                 else:
+                    self.arena = Arena()
                     self.arena.position = [992, 32]
                     self.arena.texture = self.arena.arena_ground_base_textures[8]
-                    self.arena.draw()
+                    self.arena_list.append(self.arena)
 
-        self.physics_engine = arcade.PhysicsEnginePlatformer(self.player, self.scene)
     def on_draw(self):
         """Render the screen."""
 
@@ -213,7 +214,7 @@ class MyGame(arcade.Window):
 
         # Draw our sprites
         self.arena_list.draw()
-        self.player_list.draw()
+        self.scene.draw()
 
     def process_keychange(self):
 
@@ -263,13 +264,12 @@ class MyGame(arcade.Window):
 
     def on_update(self, delta_time):
         """Movement and game logic"""
+        self.physics_engine.update()
 
         # Update Animations
         self.scene.update_animation(
             delta_time, [LAYER_NAME_PLAYER]
         )
-
-        self.physics_engine.update()
 
 
 def main():
