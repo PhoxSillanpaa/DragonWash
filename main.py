@@ -16,7 +16,7 @@ UP_FACING = 2
 
 LAYER_NAME_PLAYER = "Player"
 LAYER_NAME_ARENA = "Arena"
-LAYER_NAME_WALL = "Wall"
+LAYER_NAME_BASE_OBJECTS = "BASE_OBJECTS"
 
 
 class PC(arcade.Sprite):
@@ -93,10 +93,10 @@ class PC(arcade.Sprite):
         self.walking_down_animation_list.append(
             arcade.load_texture(f"images/PC_{self.spriteID}.png", x=0, y=34, width=16, height=17))
 
-        # Default sprite when game loads in.
+        # Default sprite when game loads in.w
         self.texture = self.idle_animation_list[0]
 
-        self.set_hit_box = [[-6, 7], [6, 7], [-6, -6], [6, -6]]
+        self.set_hit_box([[-6, -2], [6, 2], [1, -10], [-1, -10]])
 
     def update_animation(self, delta_time: float = 1 / 60):
 
@@ -155,6 +155,8 @@ class MyGame(arcade.Window):
         # Call the parent class and set up the game window
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
 
+        self.tile_map = None
+
         # Powers Movement
         self.physics_engine = None
 
@@ -180,7 +182,19 @@ class MyGame(arcade.Window):
         # Create the Sprite lists
         self.arena_list = arcade.SpriteList()
 
-        self.scene = arcade.Scene()
+        map_name = "images/arena.json"
+
+        layer_options = {
+            "GROUND": {
+                "use>spatial_hash": False
+            }
+        }
+
+        self.tile_map = arcade.load_tilemap(map_name, 1, layer_options)
+
+        self.scene = arcade.Scene.from_tilemap(self.tile_map)
+
+        # self.scene = arcade.Scene()
         self.player = PC()
         self.wall = arcade.Sprite()
 
@@ -188,23 +202,12 @@ class MyGame(arcade.Window):
         self.player.center_x = SCREEN_WIDTH // 4
         self.player.center_y = SCREEN_HEIGHT // 4
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player)
-        self.scene.add_sprite(LAYER_NAME_WALL, self.wall)
+        self.scene.add_sprite(LAYER_NAME_BASE_OBJECTS, self.wall)
         self.physics_engine = arcade.PhysicsEngineSimple(
             self.player,
-            walls=self.scene[LAYER_NAME_WALL]
+            walls=self.scene[LAYER_NAME_BASE_OBJECTS]
         )
-        for ypos in range(16):
-            for xpos in range(16):
-                if ypos == 0 and xpos == 0:
-                    self.arena = Arena()
-                    self.arena.position = [32, 992]
-                    self.arena.texture = self.arena.arena_ground_base_textures[0]
-                    self.arena_list.append(self.arena)
-                else:
-                    self.arena = Arena()
-                    self.arena.position = [992, 32]
-                    self.arena.texture = self.arena.arena_ground_base_textures[8]
-                    self.arena_list.append(self.arena)
+
 
     def on_draw(self):
         """Render the screen."""
