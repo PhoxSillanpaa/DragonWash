@@ -17,6 +17,7 @@ LEFT_FACING = 3
 UP_FACING = 2
 
 LAYER_NAME_PLAYER = "Player"
+LAYER_NAME_ARENA = "Arena"
 
 
 class PC(arcade.Sprite):
@@ -111,11 +112,10 @@ class PC(arcade.Sprite):
             self.character_face_direction = UP_FACING
 
         if self.change_x == 0 and self.change_y == 0:
-           self.texture = self.idle_animation_list[self.character_face_direction]
+            self.texture = self.idle_animation_list[self.character_face_direction]
 
         self.current_texture += 1
         if self.current_texture > 3:
-            print(self.current_texture)
             self.current_texture = 0
 
         if self.change_x != 0:
@@ -129,6 +129,23 @@ class PC(arcade.Sprite):
                 self.texture = self.walking_up_animation_list[self.current_texture]
             elif self.character_face_direction == DOWN_FACING:
                 self.texture = self.walking_down_animation_list[self.current_texture]
+
+
+class Arena(arcade.Sprite):
+
+    def __init__(self):
+
+        super().__init__()
+
+        # Make the list that will populate the textures on the very base of the arena
+        self.arena_ground_base_textures = []
+        for row in range(3):
+            for col in range(3):
+                self.arena_ground_base_textures.append(
+                    arcade.load_texture("images/tiles.png", x=64*row, y=64*col, width=64, height=64))
+                
+        self.texture = self.arena_ground_base_textures[2]
+
 
 class MyGame(arcade.Window):
     """
@@ -162,31 +179,32 @@ class MyGame(arcade.Window):
         """Set up the game here. Call this function to restart the game."""
         # Create the Sprite lists
         self.player_list = arcade.SpriteList()
-        self.wall_list = arcade.AnimatedWalkingSprite()
+        self.arena_list = arcade.SpriteList()
 
-        wall = arcade.Sprite(":resources:images/tiles/boxCrate_double.png")
+        self.arena = Arena()
 
         self.scene = arcade.Scene()
         self.player = PC()
-        self.scene.add_sprite("Walls", wall)
-        self.physics_engine = arcade.PhysicsEngineSimple(self.player, self.scene.get_sprite_list("Walls"))
+        self.scene.add_sprite("Arena", self.arena)
 
         # Set up the player at these coordinates
         self.player.center_x = SCREEN_WIDTH // 4
         self.player.center_y = SCREEN_HEIGHT // 4
         self.player_list.append(self.player)
+        self.arena_list.append(self.arena)
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player)
+        for ypos in range(16):
+            for xpos in range(16):
+                if ypos == 0 and xpos == 0:
+                    self.arena.position = [32, 992]
+                    self.arena.texture = self.arena.arena_ground_base_textures[0]
+                    self.scene.add_sprite(LAYER_NAME_ARENA, self.arena)
+                else:
+                    self.arena.position = [992, 32]
+                    self.arena.texture = self.arena.arena_ground_base_textures[8]
+                    self.arena.draw()
 
-        # Put some crates on the ground
-        # This shows using a coordinate list to place sprites
-        # coordinate_list = [[512, 96], [256, 96], [768, 96]]
-
-        # for coordinate in coordinate_list:
-            # Add a crate on the ground
-
-            # wall.position = coordinate
-            # self.wall_list.append(wall)
-
+        self.physics_engine = arcade.PhysicsEnginePlatformer(self.player, self.scene)
     def on_draw(self):
         """Render the screen."""
 
@@ -194,7 +212,7 @@ class MyGame(arcade.Window):
         arcade.start_render()
 
         # Draw our sprites
-        # self.wall_list.draw()
+        self.arena_list.draw()
         self.player_list.draw()
 
     def process_keychange(self):
@@ -252,6 +270,7 @@ class MyGame(arcade.Window):
         )
 
         self.physics_engine.update()
+
 
 def main():
     window = MyGame()
