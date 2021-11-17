@@ -98,6 +98,12 @@ class PC(arcade.Sprite):
 
         self.set_hit_box([[-3, -5], [3, -5], [3, -10], [-3, -10]])
 
+    def update(self):
+        """ Move the player """
+        pass
+        # Check for out-of-bounds
+
+
     def update_animation(self, delta_time: float = 1 / 60):
 
         # Figure out if we need to flip change sprites.
@@ -207,7 +213,7 @@ class MyGame(arcade.Window):
         self.scene.add_sprite(LAYER_NAME_PLAYER, self.player)
         self.physics_engine = arcade.PhysicsEngineSimple(
             self.player,
-            walls=self.scene[LAYER_NAME_BASE_OBJECTS]
+            walls=self.scene[LAYER_NAME_BASE_OBJECTS],
         )
 
 
@@ -222,22 +228,8 @@ class MyGame(arcade.Window):
         self.scene.draw(pixelated=True)
 
     def process_keychange(self):
+        pass
 
-        # Process up/down
-        if self.up_pressed and not self.down_pressed:
-            self.player.change_y = PLAYER_MOVEMENT_SPEED
-        elif self.down_pressed and not self.up_pressed:
-            self.player.change_y = -PLAYER_MOVEMENT_SPEED
-        else:
-            self.player.change_y = 0
-
-        # Process left/right
-        if self.right_pressed and not self.left_pressed:
-            self.player.change_x = PLAYER_MOVEMENT_SPEED
-        elif self.left_pressed and not self.right_pressed:
-            self.player.change_x = -PLAYER_MOVEMENT_SPEED
-        else:
-            self.player.change_x = 0
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
@@ -251,8 +243,6 @@ class MyGame(arcade.Window):
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = True
 
-        self.process_keychange()
-
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
 
@@ -265,10 +255,33 @@ class MyGame(arcade.Window):
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = False
 
-        self.process_keychange()
-
     def on_update(self, delta_time):
-        """Movement and game logic"""
+
+        self.player.change_x = 0
+        self.player.change_y = 0
+
+        if self.player.left < 6:
+            self.player.left = 6
+        elif self.player.right > SCREEN_WIDTH - 6:
+            self.player.right = SCREEN_WIDTH - 6
+
+        if self.player.bottom < 0:
+            self.player.bottom = 0
+        elif self.player.top > SCREEN_HEIGHT - 6:
+            self.player.top = SCREEN_HEIGHT - 6
+
+        if self.up_pressed and not self.down_pressed:
+            self.player.change_y = PLAYER_MOVEMENT_SPEED
+        elif self.down_pressed and not self.up_pressed:
+            self.player.change_y = -PLAYER_MOVEMENT_SPEED
+
+            # Process left/right
+        if self.right_pressed and not self.left_pressed:
+            self.player.change_x = PLAYER_MOVEMENT_SPEED
+        elif self.left_pressed and not self.right_pressed:
+            self.player.change_x = -PLAYER_MOVEMENT_SPEED
+
+
         self.physics_engine.update()
 
         # Update Animations
