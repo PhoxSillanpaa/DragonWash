@@ -102,7 +102,6 @@ class PC(arcade.Sprite):
         if self.change_x == 0 and self.change_y == 0:
             self.texture = self.idle_animation_list[self.character_face_direction]
 
-        print(f"{self.current_texture}")
         self.current_texture += 1
         if self.current_texture > 3:
             self.current_texture = 0

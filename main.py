@@ -12,9 +12,9 @@ SCREEN_TITLE = "Dragon Wash"
 
 PLAYER_MOVEMENT_SPEED = 10
 
-LAYER_NAME_PLAYER = "Player"
 LAYER_NAME_DRAGON = "Dragon"
 LAYER_NAME_BASE_OBJECTS = "BASE_OBJECTS"
+LAYER_NAME_UPPER_OBJECTS = "UPPER_OBJECTS"
 
 
 class MyGame(arcade.Window):
@@ -31,9 +31,6 @@ class MyGame(arcade.Window):
         # Powers Movement
         self.physics_engine = None
 
-        self.dragon = Dragon.Dragon(1, 1)
-        self.player = Player.PC()
-
         # Buttons State
         self.left_pressed = False
         self.right_pressed = False
@@ -43,9 +40,6 @@ class MyGame(arcade.Window):
 
         self.scene = None
 
-        # Separate variable that holds the player sprite
-        self.player_sprite = None
-
         arcade.set_background_color(arcade.csscolor.LAWNGREEN)
 
     def setup(self):
@@ -54,24 +48,33 @@ class MyGame(arcade.Window):
         map_name = "images/arena.json"
 
         layer_options = {
-            "LAYER_NAME_DRAGON": {
-            },
-            "LAYER_NAME_PLAYER": {
-            },
             "LAYER_NAME_BASE_OBJECTS": {
-                "use>spatial_hash": False
+                "use>spatial_hash": True,
             }
         }
 
         self.tile_map = arcade.load_tilemap(map_name, 1, layer_options)
 
         self.scene = arcade.Scene.from_tilemap(self.tile_map)
+        print(self.scene.name_mapping)
+
+        self.player = Player.PC()
+        self.scene.add_sprite_list_before("Player", LAYER_NAME_UPPER_OBJECTS)
+
+        self.scene.add_sprite("Player", self.player)
+
+
 
         # Set up the player at these coordinates
         self.player.center_x = SCREEN_WIDTH // 4
         self.player.center_y = SCREEN_HEIGHT // 4
-        self.scene.add_sprite(LAYER_NAME_PLAYER, self.player)
-        self.scene.add_sprite(LAYER_NAME_DRAGON, self.dragon)
+
+        self.dragon = Dragon.Dragon(1, 1)
+
+        self.scene.add_sprite_list(LAYER_NAME_DRAGON, True, self.dragon.body_sprites)
+        print(self.dragon.head.center_y)
+
+        print(self.scene.name_mapping)
         self.physics_engine = arcade.PhysicsEngineSimple(
             self.player,
             walls=self.scene[LAYER_NAME_BASE_OBJECTS],
@@ -137,11 +140,14 @@ class MyGame(arcade.Window):
             self.player.change_x = -PLAYER_MOVEMENT_SPEED
 
         self.physics_engine.update()
-
         # Update Animations
 
         self.scene.update_animation(
-            delta_time, [LAYER_NAME_PLAYER]
+            delta_time,
+            [
+                "Player",
+                LAYER_NAME_DRAGON,
+            ],
         )
 
 
