@@ -2,6 +2,7 @@ import arcade
 
 import Player
 import Dragon
+import Spray
 
 # Constraints
 SCREEN_WIDTH = 1024
@@ -36,7 +37,7 @@ class MyGame(arcade.Window):
         self.right_pressed = False
         self.up_pressed = False
         self.down_pressed = False
-        self.water_pressed = False
+        self.space_pressed = False
 
         self.scene = None
 
@@ -62,8 +63,7 @@ class MyGame(arcade.Window):
         self.scene.add_sprite_list_before("Player", LAYER_NAME_UPPER_OBJECTS)
 
         self.scene.add_sprite("Player", self.player)
-
-
+        self.scene.add_sprite_list("Water", True)
 
         # Set up the player at these coordinates
         self.player.center_x = SCREEN_WIDTH // 4
@@ -100,6 +100,10 @@ class MyGame(arcade.Window):
             self.left_pressed = True
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = True
+        elif key == arcade.key.SPACE:
+            self.player.action = 1
+            self.space_pressed = True
+
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
@@ -112,6 +116,9 @@ class MyGame(arcade.Window):
             self.left_pressed = False
         elif key == arcade.key.RIGHT or key == arcade.key.D:
             self.right_pressed = False
+        elif key == arcade.key.SPACE:
+            self.player.action = 0
+            self.space_pressed = False
 
     def on_update(self, delta_time):
 
@@ -128,16 +135,42 @@ class MyGame(arcade.Window):
         elif self.player.top > SCREEN_HEIGHT - 6:
             self.player.top = SCREEN_HEIGHT - 6
 
-        if self.up_pressed and not self.down_pressed:
+        # Process up/down
+        if self.up_pressed and not (self.down_pressed or self.space_pressed):
             self.player.change_y = PLAYER_MOVEMENT_SPEED
-        elif self.down_pressed and not self.up_pressed:
+        elif self.down_pressed and not (self.up_pressed or self.space_pressed):
             self.player.change_y = -PLAYER_MOVEMENT_SPEED
 
-            # Process left/right
-        if self.right_pressed and not self.left_pressed:
+        # Process left/right
+        if self.right_pressed and not (self.left_pressed or self.space_pressed):
             self.player.change_x = PLAYER_MOVEMENT_SPEED
-        elif self.left_pressed and not self.right_pressed:
+        elif self.left_pressed and not (self.right_pressed or self.space_pressed):
             self.player.change_x = -PLAYER_MOVEMENT_SPEED
+
+        # Shoot Water
+        if self.space_pressed:
+
+            bullet = arcade.Sprite(
+                ":resources:images/space_shooter/laserBlue01.png",
+                1,
+            )
+
+            if self.player.character_face_direction == 3:
+                bullet.change_x = Spray.Water.SPEED
+            else:
+                bullet.change_x = -Spray.Water.SPEED
+
+            bullet.center_x = self.player.center_x
+            bullet.center_y = self.player.center_y
+
+            self.scene.add_sprite("Water", bullet)
+            # water = Spray.Water()
+
+            # water.center_x = self.player.center_x
+            # water.center_y = self.player.center_y
+            # water.change_x = Spray.Water.SPEED
+
+            # self.scene.add_sprite("Water", water)
 
         self.physics_engine.update()
         # Update Animations
@@ -146,6 +179,7 @@ class MyGame(arcade.Window):
             delta_time,
             [
                 "Player",
+                "Water",
                 LAYER_NAME_DRAGON,
             ],
         )
