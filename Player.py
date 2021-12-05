@@ -1,11 +1,11 @@
 import arcade
 
-CHARACTER_SCALING = 4
+CHARACTER_SCALING = 1
 
-RIGHT_FACING = 1
+RIGHT_FACING = 2
 DOWN_FACING = 0
-LEFT_FACING = 3
-UP_FACING = 2
+LEFT_FACING = 1
+UP_FACING = 3
 
 
 class PC(arcade.Sprite):
@@ -18,7 +18,7 @@ class PC(arcade.Sprite):
         self.character_face_direction = DOWN_FACING
 
         # Determines what appearance has been chosen.
-        self.spriteID = 16
+        self.spriteID = 25
 
         # Are we cleaning a dragon?
         self.spraying = False
@@ -30,62 +30,48 @@ class PC(arcade.Sprite):
         # --- Animation control ---
         # Idle animations. This loop loops through the top four sprites on the sprite sheet.
         self.idle_animation_list = []
+        self.shooting_animation_list = []
+        self.hurt_animation_list = []
+        self.walking_left_animation_list = []
+        self.walking_down_animation_list = []
+        self.walking_right_animation_list = []
+        self.walking_up_animation_list = []
+        self.action = 0
+        # Handles the idle sprites
         for x in range(4):
             self.idle_animation_list.append(
-                arcade.load_texture(f"images/PC_{self.spriteID}.png", x=16 * x, y=0, width=16, height=17))
+                arcade.load_texture(f"images/PC_{self.spriteID}.png", x=64 * x, y=0, width=64, height=64))
 
-        # ToDo: This is fucked up. When we get new Sprite sheets, fix it.
-        # Handles populating the list for walking left.
-        self.walking_left_animation_list = []
-        self.walking_left_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=48, y=0, width=16, height=17))
-        self.walking_left_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=48, y=17, width=16, height=17))
-        self.walking_left_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=48, y=0, width=16, height=17))
-        self.walking_left_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=48, y=34, width=16, height=17))
+        # Handles populating the list for walking sprites.
+        for row in range(4):
+            for col in range(4):
+                if row == 1:
+                    self.walking_down_animation_list.append(
+                        arcade.load_texture(f"images/PC_{self.spriteID}.png", x=0, y=col * 64, width=64, height=64))
+                elif row == 2:
+                    self.walking_left_animation_list.append(
+                        arcade.load_texture(f"images/PC_{self.spriteID}.png", x=64, y=col * 64, width=64, height=64))
+                elif row == 3:
+                    self.walking_right_animation_list.append(
+                        arcade.load_texture(f"images/PC_{self.spriteID}.png", x=128, y=col * 64, width=64, height=64))
+                else:
+                    self.walking_up_animation_list.append(
+                        arcade.load_texture(f"images/PC_{self.spriteID}.png", x=192, y=col * 64, width=64, height=64))
 
-        # ToDo: This is fucked up. When we get new Sprite sheets, fix it.
-        # Handles populating the list for walking right.
-        self.walking_right_animation_list = []
-        self.walking_right_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=16, y=0, width=16, height=17))
-        self.walking_right_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=16, y=17, width=16, height=17))
-        self.walking_right_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=16, y=0, width=16, height=17))
-        self.walking_right_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=16, y=34, width=16, height=17))
+        # Handles the shooting sprites.
+        for x in range(4):
+            self.shooting_animation_list.append(
+                arcade.load_texture(f"images/PC_{self.spriteID}.png", x=64 * x, y=320, width=64, height=64))
 
-        # ToDo: This is fucked up. When we get new Sprite sheets, fix it.
-        # Handles populating the list for walking up.
-        self.walking_up_animation_list = []
-        self.walking_up_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=32, y=0, width=16, height=17))
-        self.walking_up_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=32, y=17, width=16, height=17))
-        self.walking_up_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=32, y=0, width=16, height=17))
-        self.walking_up_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=32, y=34, width=16, height=17))
+        # Handles the hurt sprites.
+        for x in range(4):
+            self.hurt_animation_list.append(
+                arcade.load_texture(f"images/PC_{self.spriteID}.png", x=64 * x, y=384, width=64, height=64))
 
-        # ToDo: This is fucked up. When we get new Sprite sheets, fix it.
-        # Handles populating the list for walking down.
-        self.walking_down_animation_list = []
-        self.walking_down_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=0, y=0, width=16, height=17))
-        self.walking_down_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=0, y=17, width=16, height=17))
-        self.walking_down_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=0, y=0, width=16, height=17))
-        self.walking_down_animation_list.append(
-            arcade.load_texture(f"images/PC_{self.spriteID}.png", x=0, y=34, width=16, height=17))
-
-        # Default sprite when game loads in.w
+        # Default sprite when game loads in.
         self.texture = self.idle_animation_list[0]
 
-        self.set_hit_box([[-3, -5], [3, -5], [3, -10], [-3, -10]])
+        self.set_hit_box([[-12, -20], [12, -20], [12, -40], [-12, -40]])
 
     def update_animation(self, delta_time: float = 1 / 60):
 
@@ -99,8 +85,10 @@ class PC(arcade.Sprite):
         elif self.change_y > 0 and self.character_face_direction != UP_FACING:
             self.character_face_direction = UP_FACING
 
-        if self.change_x == 0 and self.change_y == 0:
+        if self.change_x == 0 and self.change_y == 0 and self.action == 0:
             self.texture = self.idle_animation_list[self.character_face_direction]
+        elif self.action == 1:
+            self.texture = self.shooting_animation_list[self.character_face_direction]
 
         self.current_texture += 1
         if self.current_texture > 3:
